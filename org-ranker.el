@@ -11,6 +11,8 @@
 
 ;;; Code:
 
+(require 'org)
+
 ;;;###autoload
 (defcustom org-ranker-sort-method 'priority
   "Sorting method for org-mode headlines."
@@ -23,28 +25,49 @@
 (defun org-ranker-sort-headlines ()
   "Sort the headlines in the current Org buffer based on user-defined criteria."
   (interactive)
-  (let ((headlines (org-element-map (org-element-parse-buffer) 'headline
-                     (lambda (hl) hl))))
-    (setq headlines (org-ranker-sort-headlines-by-criteria headlines))
-    (org-ranker-update-buffer headlines)))
+  (save-excursion
+    (let ((headlines (org-ranker-extract-headlines)))
+      (setq headlines (org-ranker-sort-headlines-by-criteria headlines))
+      (org-ranker-update-buffer headlines))))
+
+;;;###autoload
+(defun org-ranker-extract-headlines ()
+  "Extract headlines from the current Org buffer."
+  (let (headlines)
+    (org-map-entries
+     (lambda ()
+       (push (org-get-heading) headlines))
+     nil 'tree)
+    headlines))
 
 ;;;###autoload
 (defun org-ranker-sort-headlines-by-criteria (headlines)
   "Sort headlines based on the user-defined sorting criteria."
   (pcase org-ranker-sort-method
-    ('priority (sort headlines (lambda (a b) (string< (org-entry-get (car a) "PRIORITY")
-                                                   (org-entry-get (car b) "PRIORITY")))))
-    ('date (sort headlines (lambda (a b) (string< (org-entry-get (car a) "TIMESTAMP")
-                                               (org-entry-get (car b) "TIMESTAMP")))))
-    ('custom (sort headlines (lambda (a b) (string< (org-entry-get (car a) "CUSTOM-TAG")
-                                                  (org-entry-get (car b) "CUSTOM-TAG")))))))
+    ('priority (sort headlines
+                     (lambda (a b)
+                       (let ((pri-a (org-entry-get (point-at-heading a) "PRIORITY"))
+                             (pri-b (org-entry-get (point-at-heading b) "PRIORITY")))
+                         (string< pri-a pri-b)))))
+    ('date (sort headlines
+                 (lambda (a b)
+                   (let ((date-a (org-entry-get (point-at-heading a) "TIMESTAMP"))
+                         (date-b (org-entry-get (point-at-heading b) "TIMESTAMP")))
+                     (string< date-a date-b)))))
+    ('custom (sort headlines
+                   (lambda (a b)
+                     (let ((tag-a (org-entry-get (point-at-heading a) "CUSTOM-TAG"))
+                           (tag-b (org-entry-get (point-at-heading b) "CUSTOM-TAG")))
+                       (string< tag-a tag-b)))))
+    (_ headlines))  ; Return unsorted if invalid type
   headlines)
 
 ;;;###autoload
 (defun org-ranker-update-buffer (headlines)
   "Update the buffer with sorted headlines."
-  ;; Placeholder function. You'll need to implement logic to update the org buffer with sorted headlines.
-  )
+  (let ((sorted-buffer (mapconcat #'identity headlines "\n")))
+    (erase-buffer)
+    (insert sorted-buffer)))
 
 (provide 'org-ranker)
 
