@@ -1,34 +1,50 @@
+#+RANKER-RULE: GENDER==F:2
+#+RANKER-RULE: LOCATION~~Florida:5
+#+RANKER-RULE: LOCATION==12:-5
+#+RANKER-RULE: LOCATION!=12:-5
+#+RANKER-RULE: LOCATION!~Florida:10
+#+RANKER-RULE: CITYNAME:(my-city-score-func)
+#+RANKER-RULE: PRIORITY>high:10
+#+RANKER-RULE: PRIORITY<=medium:11
 
-* Heading 3
-  :PROPERTIES:
-  :SCORE: 8
-  :ORG-RANKER-SCORE: 10
-  :END:
-Some content under heading 3.
+#+RANKER-EXCLUDE: LOCATION==12
 
-* Heading 4
-  :PROPERTIES:
-  :SCORE: 1
-  :ORG-RANKER-SCORE: 10
-  :END:
-Some content under heading 4.
+
+* Heading 5
+:PROPERTIES:
+:GENDER:   F
+:LOCATION: 12
+:END:
+Some content under heading 5.
+
 * Heading 2
   :PROPERTIES:
-  :SCORE: 3
-  :ORG-RANKER-SCORE: 8
+  :GENDER: M
+  :LOCATION: 12
+  :ORG-RANKER-SCORE: 12
   :END:
 Some content under heading 2.
 
+* Heading 4
+  :PROPERTIES:
+  :GENDER: F
+  :ORG-RANKER-SCORE: 23
+  :ORG-RANKER-BASE-SCORE: 10
+  :END:
+Some content under heading 4.
+* Heading 3
+  :PROPERTIES:
+  :LOCATION: South Florida
+  :ORG-RANKER-SCORE: 16
+  :END:
+Some content under heading 3.
+
 * Heading 1
   :PROPERTIES:
-  :SCORE: 5
-  :ORG-RANKER-SCORE: 4
+  :LOCATION: FLOriDA
+  :ORG-RANKER-SCORE: 16
   :END:
 Some content under heading 1.
 
-* Heading 5
-  :PROPERTIES:
-  :SCORE: 7
-  :ORG-RANKER-SCORE: 2
-  :END:
-Some content under heading 5.
+* EXCLUDE                                                           :exclude:
+
