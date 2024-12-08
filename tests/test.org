@@ -1,0 +1,34 @@
+
+* Heading 3
+  :PROPERTIES:
+  :SCORE: 8
+  :ORG-RANKER-SCORE: 10
+  :END:
+Some content under heading 3.
+
+* Heading 4
+  :PROPERTIES:
+  :SCORE: 1
+  :ORG-RANKER-SCORE: 10
+  :END:
+Some content under heading 4.
+* Heading 2
+  :PROPERTIES:
+  :SCORE: 3
+  :ORG-RANKER-SCORE: 8
+  :END:
+Some content under heading 2.
+
+* Heading 1
+  :PROPERTIES:
+  :SCORE: 5
+  :ORG-RANKER-SCORE: 4
+  :END:
+Some content under heading 1.
+
+* Heading 5
+  :PROPERTIES:
+  :SCORE: 7
+  :ORG-RANKER-SCORE: 2
+  :END:
+Some content under heading 5.
