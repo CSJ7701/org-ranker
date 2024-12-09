@@ -33,6 +33,16 @@ Defaults to 'ORG-RANKER-BASE-SCORE'."
 Defaults to 'RANKER-RULE'."
   :type 'string
   :group 'org-ranker)
+(defcustom org-ranker-exclude-keyword "RANKER-EXCLUDE"
+  "The keyword name that org-ranker uses to identify exclusion rules in each buffer.
+Defaults to 'RANKER-EXCLUDE'."
+  :type 'string
+  :group 'org-ranker)
+(defcustom org-ranker-highlight-keyword "RANKER-HIGHLIGHT"
+  "The keyword name that org-ranker uses to identify highlight rules in each buffer.
+Defaults to 'RANKER-HIGHLIGHT'."
+  :type 'string
+  :group 'org-ranker)
 
 (defcustom org-ranker-exclude-header-name "EXCLUDE"
   "The name of the top-level heading under which org-ranker will place all excluded entries.
@@ -220,10 +230,14 @@ Return a list: (key comparator value score)."
      ((string= comparator "!=")
       (if (string= value target) 0 score-or-func))
      ;; Substring matching (case insensitive)
-     ((string= comparator "~")
+     ((string= comparator "~~")
       (if (string-match-p (regexp-quote (downcase target))
 			  (downcase value))
 	  score-or-func 0))
+     ((string= comparator "!~")
+      (if (string-match-p (regexp-quote (downcase target))
+			  (downcase value))
+	  0 score-or-func))
      ;; Numeric comparison
      ((member comparator '(">" "<" ">=" "<="))
       (let ((value-num (string-to-number value))
@@ -443,6 +457,104 @@ Returns a list: (key comparator value)."
 
 ;;; Markup (highlight, more?)
 ;; TODO
+
+(defun org-ranker-parse-highlight (highlight-rule)
+  "Parse a single RANKER-HIGHLIGHT rule into its components.
+Returns a list of (PROPERTY COMPARATOR VALUE COLOR)."
+  (when (string-match "\\([^~=><!~]+\\)\\([~=><!~]=?\\|~~\\)?\\([^:]*\\):\\(#\\(?:[0-9a-fA-F]\\{6\\}\\|[0-9a-fA-F]\\{3\\}\\)\\)" highlight-rule)
+    (let* ((property (match-string 1 highlight-rule))
+	   (comparator (match-string 2 highlight-rule))
+	   (value (match-string 3 highlight-rule))
+           (color (match-string 4 highlight-rule)))
+      (list property comparator value color))))
+
+(defun org-ranker-get-highlights ()
+  "Retrieve all RANKER-HIGHLIGHT rules from the file and parse them."
+  (let (highlights)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^#\\+RANKER-HIGHLIGHT: \\(.+\\)$" nil t)
+        (let ((rule (match-string 1)))
+          (push (org-ranker-parse-highlight (substring-no-properties rule)) highlights))))
+    (reverse highlights)))
+
+;; TODO: Doesn't work?
+(defun org-ranker-evaluate-highlight (highlight value)
+  "Evaluate a HIGHLIGHT rule against a VALUE.
+Returns the color if the evaluated heading should be highlighted, 'nil' if not."
+  (let ((key (nth 0 highlight))
+	(comparator (nth 1 highlight))
+	(target (nth 2 highlight))
+	(color (nth 3 highlight)))
+    (cond
+     ((string= comparator "==")
+      (if (string= value target) color nil))
+     ((string= comparator "!=")
+      (if (string= value target) nil color))
+     ((string= comparator "~~")
+      (if (string-match-p (regexp-quote (downcase target))
+			  (downcase value))
+	  color nil))
+     ((string= comparator "!~")
+      (if (string-match-p (regexp-quote (downcase target))
+			  (downcase value))
+	  nil color))
+     ((member comparator '(">" "<" ">=" "<="))
+      (let ((value-num (string-to-number value))
+	    (target-num (string-to-number target)))
+	(cond
+	 ((and (equal comparator ">") (> value-num target-num)) color)
+	 ((and (equal comparator "<") (< value-num target-num)) color)
+	 ((and (equal comparator ">=") (>= value-num target-num)) color)
+	 ((and (equal comparator "<=") (<= value-num target-num)) color)
+	 (t nil))))
+     (t nil))))
+
+(defun org-ranker-evaluate-highlights (highlights)
+  "Evaluate a heading against all defined 'RANKER-HIGHLIGHT' rules. Returns a hex code if the heading should be highlighted, 'nil' if not.
+This function does not handle conflicts - if there are multiple matching rules, the one that is defined last takes precedence."
+  (let ((color nil))
+    (dolist (rule highlights)
+      (let* ((key (nth 0 rule))
+	    (value (org-entry-get (point) key)))
+	(when value
+	  (setq color (org-ranker-evaluate-highlight rule value)))))
+    color))
+
+(defun org-ranker-highlight-current-line (color)
+  "Apply an overlay to
+the current line with specified COLOR."
+  (let ((start (line-beginning-position))
+	(end (line-end-position)))
+    (remove-overlays start end 'org-ranker-overlay t)
+    (let ((overlay (make-overlay start end)))
+      (overlay-put overlay 'face `(:background ,color))
+      (overlay-put overlay 'org-ranker-overlay t))))
+
+(defun org-ranker-remove-highlights ()
+  "Remove all 'org-ranker' overlays in the current buffer."
+  (interactive) (remove-overlays (point-min) (point-max) 'org-ranker-overlay t))
+
+(defun org-ranker-remove-highlight ()
+  "Remove the overlay from the current line."
+  (interactive)
+  (let ((start (line-beginning-position))
+	(end (line-end-position)))
+    (remove-overlays start end 'org-ranker-overlay t)))
+
+(defun org-ranker-highlight ()
+  "Highlight Org headings based on 'org-ranker-evaluate-highlights'."
+  (interactive)
+  (org-map-entries
+   (lambda ()
+     (let ((color (org-ranker-evaluate-highlights (org-ranker-get-highlights))))
+       (when color
+	 (org-ranker-highlight-current-line color))))))
+
+(defun org-ranker-manual-highlight (color)
+  "Manually apply a highlight to the current line with the specified COLOR."
+  (interactive "sEnter color (e.g., #ff0000): ")
+  (org-ranker-highlight-current-line color))
 
 ;;; Wrapper
 (defun org-ranker-sort ()
