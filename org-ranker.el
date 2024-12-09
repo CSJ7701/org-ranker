@@ -584,6 +584,7 @@ functions individually:
   (org-ranker-exclude)
   (org-ranker-unexclude)
   (org-ranker-sort-headlines)
+  (org-ranker-highlight)
   )
 
 (provide 'org-ranker)

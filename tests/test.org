@@ -12,21 +12,6 @@
 #+RANKER-HIGHLIGHT: LOCATION==12:#d2d2b4b48c8c
 
 
-* Heading 5
-:PROPERTIES:
-:GENDER:   F
-:LOCATION: 12
-:END:
-Some content under heading 5.
-
-* Heading 2
-  :PROPERTIES:
-  :GENDER: M
-  :LOCATION: 12
-  :ORG-RANKER-SCORE: 12
-  :END:
-Some content under heading 2.
-
 * Heading 4
   :PROPERTIES:
   :GENDER: F
@@ -34,19 +19,38 @@ Some content under heading 2.
   :ORG-RANKER-BASE-SCORE: 10
   :END:
 Some content under heading 4.
-* Heading 3
-  :PROPERTIES:
-  :LOCATION: South Florida
-  :ORG-RANKER-SCORE: 16
-  :END:
-Some content under heading 3.
-
 * Heading 1
   :PROPERTIES:
   :LOCATION: FLOriDA
-  :ORG-RANKER-SCORE: 16
+  :ORG-RANKER-SCORE: 6
   :END:
 Some content under heading 1.
 
+* Heading 3
+  :PROPERTIES:
+  :LOCATION: South Florida
+  :ORG-RANKER-SCORE: 6
+  :END:
+Some content under heading 3.
+
 * EXCLUDE                                                           :exclude:
+:PROPERTIES:
+:ORG-RANKER-SCORE: 11
+:END:
+
+** Heading 2
+  :PROPERTIES:
+  :GENDER: M
+  :LOCATION: 12
+  :ORG-RANKER-SCORE: 6
+  :END:
+Some content under heading 2.
+
+** Heading 5
+:PROPERTIES:
+:GENDER:   F
+:LOCATION: 12
+:ORG-RANKER-SCORE: 8
+:END:
+Some content under heading 5.
 
