@@ -12,15 +12,16 @@
 ;;; Code:
 
 (require 'org)
+(require 'csv)
 
-;;; Variables
+;;; =======  Variables  =======
 
+;; Properties
 (defcustom org-ranker-score-property "ORG-RANKER-SCORE"
   "The property name that org-ranker uses to retrieve scores for sorting.
 Defaults to 'ORG-RANKER-SCORE'."
   :type 'string
   :group 'org-ranker)
-
 (defcustom org-ranker-base-score-property "ORG-RANKER-BASE-SCORE"
   "The property name that org-ranker uses to set a base score.
 Base scores are not changed by org-ranker, but contribute to the heading's score. They must be set manually.
@@ -28,6 +29,7 @@ Defaults to 'ORG-RANKER-BASE-SCORE'."
   :type 'string
   :group 'org-ranker)
 
+;; Keywords
 (defcustom org-ranker-rule-keyword "RANKER-RULE"
   "The keyword name that org-ranker uses to score rules in each buffer.
 Defaults to 'RANKER-RULE'."
@@ -44,6 +46,7 @@ Defaults to 'RANKER-HIGHLIGHT'."
   :type 'string
   :group 'org-ranker)
 
+;; Header Values
 (defcustom org-ranker-exclude-header-name "EXCLUDE"
   "The name of the top-level heading under which org-ranker will place all excluded entries.
 Defaults to 'EXCLUDE'."
@@ -56,7 +59,44 @@ Defaults to 'exclude'."
   :type 'string
   :group 'org-ranker)
 
-;;; Basic movement
+;; Code Variables
+(defcustom org-ranker-rule-regex "\\([^~=><!~]+\\)\\(~~\\|!~\\|[~=><!~]=?\\)\\([^:]*\\):\\(.*\\)"
+  "The regex string org-ranker uses to identify and split rule strings.
+Used in 'org-ranker-get-rules'."
+  :type 'string
+  :group 'org-ranker)
+
+(defcustom org-ranker-rule-keyword-regex (concat "^#\\+" org-ranker-rule-keyword  ": \\(.+\\)$")
+  "The regex string org-ranker uses to identify rule keywords."
+  :type 'string
+  :group 'org-ranker)
+
+(defcustom org-ranker-exclude-regex "\\([^~=><!~]+\\)\\(~~\\|!~\\|[~=><!~]=?\\)\\([^:]*\\)"
+  "The regex string org-ranker uses to identify and split exclude strings.
+Used in 'org-ranker-parse-exclude'."
+  :type 'string
+  :group 'org-ranker)
+
+(defcustom org-ranker-exclude-keyword-regex (concat "^#\\+" org-ranker-exclude-keyword ": \\(.+\\)$")
+  "The regex string org-ranker uses to identify exclude keywords.
+Used in 'org-ranker-get-excludes'"
+  :type 'string
+  :group 'org-ranker)
+
+(defcustom org-ranker-highlight-regex "\\([^~=><!~]+\\)\\(~~\\|!~\\|[~=><!~]=?\\)\\([^:]*\\):\\(#\\(?:[0-9a-fA-F]\\{6\\}\\|[0-9a-fA-F]\\{3\\}\\)\\)"
+  "The regex string org-ranker uses to identify and split highlight strings.
+Used in org-ranker-parse-highlight."
+  :type 'string
+  :group 'org-ranker)
+
+(defcustom org-ranker-highlight-keyword-regex (concat "^#\\+" org-ranker-highlight-keyword ": \\(.+\\)$")
+  "The regex string org-ranker uses to identify highlight keywords.
+Used in 'org-ranker-get-highlights'."
+  :type 'string
+  :group 'org-ranker)
+						    
+
+;;; =====  Basic movement  =======
 (defun org-ranker-move-headline-up ()
   "Move the current headline up."
   (interactive)
@@ -195,8 +235,8 @@ Iterates from the end of the buffer to avoid position shifting issues."
 (defun org-ranker-parse-rule (rule)
   "Parse a single #+RANKER-RULE string into structured date.
 Return a list: (key comparator value score)."
-  (if (string-match "\\([^~=><!~]+\\)\\([~=><!~]=?\\|~~\\)?\\([^:]*\\):\\(.*\\)" rule)
-      (let ((key (match-string 1 rule))
+  (if (string-match org-ranker-rule-regex rule)
+      (let ((key (upcase (match-string 1 rule)))
 	    (comparator (match-string 2 rule))
 	    (value (match-string 3 rule))
 	    (score-or-func (match-string 4 rule)))
@@ -210,10 +250,10 @@ Return a list: (key comparator value score)."
   (let (rules)
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward "^#\\+RANKER-RULE: \\(.+\\)$" nil t)
+      (while (re-search-forward org-ranker-rule-keyword-regex nil t)
 	(let ((rule (match-string 1)))
 	  (push (org-ranker-parse-rule (substring-no-properties rule)) rules))))
-    (reverse rules)))
+    (reverse (delq nil rules))))
 
 (defun org-ranker-evaluate-rule (rule value)
   "Evaluate a RULE against a VALUE and return the corresponding score."
@@ -261,7 +301,7 @@ Return a list: (key comparator value score)."
   (let ((score 0))
     (dolist (rule rules)
       (let ((key (nth 0 rule))
-	    (value (org-entry-get (point) (nth 0 rule)))) ;; Get the property value
+	    (value (or (org-entry-get (point) (nth 0 rule)) ""))) ;; Get the property value
 	(when value
 	  (setq score (+ score (org-ranker-evaluate-rule rule value))))))
     score))
@@ -326,7 +366,7 @@ Return a list: (key comparator value score)."
 (defun org-ranker-parse-exclude (rule)
   "Parse a single exclusion rule into structured data.
 Returns a list: (key comparator value)."
-  (if (string-match "\\([^~=><!~]+\\)\\([~=><!~]=?\\|~~\\)?\\([^:]*\\)" rule)
+  (if (string-match org-ranker-exclude-regex rule)
       (let ((key (match-string 1 rule))
 	    (comparator (match-string 2 rule))
 	    (value (match-string 3 rule)))
@@ -337,7 +377,7 @@ Returns a list: (key comparator value)."
   (let (excludes)
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward "^#\\+RANKER-EXCLUDE: \\(.+\\)$" nil t)
+      (while (re-search-forward org-ranker-exclude-keyword-regex nil t)
 	(let ((rule (match-string 1)))
 	  (push (org-ranker-parse-exclude (substring-no-properties rule)) excludes))))
     (reverse excludes)))
@@ -378,7 +418,7 @@ Returns a list: (key comparator value)."
   (let ((exclude-p nil))
     (dolist (exclude excludes)
       (let ((key (nth 0 exclude))
-	    (value (org-entry-get (point) (nth 0 exclude))))
+	    (value (or (org-entry-get (point) (nth 0 exclude)) "")))
 	(when value
 	  (setq exclude-p (org-ranker-evaluate-exclude exclude value)))))
     exclude-p))
@@ -394,9 +434,8 @@ Returns a list: (key comparator value)."
        (let ((exclude-p (org-ranker-evaluate-excludes rules)))
 	 (when exclude-p
 	   (push (point) headings-to-move)))
-       nil 'file))
-
-    (dolist (pos headings-to-move)
+       nil 'tree))
+    (dolist (pos (reverse headings-to-move))
       (goto-char pos)
       (org-cut-subtree)
       (goto-char (org-ranker-get-exclude-heading-position))
@@ -405,11 +444,6 @@ Returns a list: (key comparator value)."
       (if (equal (org-current-level) 1)
 	  (org-demote-subtree))
       (message "Excluded: %s" (org-get-heading t t t t)))))
-
-
-;; TODO: FIX THIS.
-;; Can't preallocate the list of points to visit, since paste will screw it up
-;; Trying to count the number of headings I have to move,
 
 (defun org-ranker-unexclude-one ()
   "Evaluates all subheadings under the 'exclude' heading, moving any that no longer match exclusion rules back to the main body."
@@ -456,12 +490,11 @@ Returns a list: (key comparator value)."
 	  (message "Unexcluded %d heading(s)." moved-count))))))
 
 ;;; Markup (highlight, more?)
-;; TODO
 
 (defun org-ranker-parse-highlight (highlight-rule)
   "Parse a single RANKER-HIGHLIGHT rule into its components.
 Returns a list of (PROPERTY COMPARATOR VALUE COLOR)."
-  (when (string-match "\\([^~=><!~]+\\)\\([~=><!~]=?\\|~~\\)?\\([^:]*\\):\\(#\\(?:[0-9a-fA-F]\\{6\\}\\|[0-9a-fA-F]\\{3\\}\\)\\)" highlight-rule)
+  (when (string-match org-ranker-highlight-regex highlight-rule)
     (let* ((property (match-string 1 highlight-rule))
 	   (comparator (match-string 2 highlight-rule))
 	   (value (match-string 3 highlight-rule))
@@ -473,12 +506,11 @@ Returns a list of (PROPERTY COMPARATOR VALUE COLOR)."
   (let (highlights)
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward "^#\\+RANKER-HIGHLIGHT: \\(.+\\)$" nil t)
+      (while (re-search-forward org-ranker-highlight-keyword-regex nil t)
         (let ((rule (match-string 1)))
           (push (org-ranker-parse-highlight (substring-no-properties rule)) highlights))))
     (reverse highlights)))
 
-;; TODO: Doesn't work?
 (defun org-ranker-evaluate-highlight (highlight value)
   "Evaluate a HIGHLIGHT rule against a VALUE.
 Returns the color if the evaluated heading should be highlighted, 'nil' if not."
@@ -512,18 +544,20 @@ Returns the color if the evaluated heading should be highlighted, 'nil' if not."
 
 (defun org-ranker-evaluate-highlights (highlights)
   "Evaluate a heading against all defined 'RANKER-HIGHLIGHT' rules. Returns a hex code if the heading should be highlighted, 'nil' if not.
-This function does not handle conflicts - if there are multiple matching rules, the one that is defined last takes precedence."
-  (let ((color nil))
+This function does not handle conflicts - if there are multiple matching rules, the one that is defined first takes precedence."
+  (let ((matches nil))
     (dolist (rule highlights)
       (let* ((key (nth 0 rule))
-	    (value (org-entry-get (point) key)))
-	(when value
-	  (setq color (org-ranker-evaluate-highlight rule value)))))
-    color))
+	     (value (or (org-entry-get (point) key) ""))
+	     (new-color (when value (org-ranker-evaluate-highlight rule value))))
+	(when new-color
+	  (push new-color matches))))
+    (car (last matches))))
 
 (defun org-ranker-highlight-current-line (color)
-  "Apply an overlay to
-the current line with specified COLOR."
+  "Apply an overlay to the current line with specified COLOR.
+Helper function for 'org-ranker-highlight' - not meant to be used manually.
+If you want to manually highlight a heading, use 'org-ranker-manual-highlight'."
   (let ((start (line-beginning-position))
 	(end (line-end-position)))
     (remove-overlays start end 'org-ranker-overlay t)
@@ -543,18 +577,74 @@ the current line with specified COLOR."
     (remove-overlays start end 'org-ranker-overlay t)))
 
 (defun org-ranker-highlight ()
-  "Highlight Org headings based on 'org-ranker-evaluate-highlights'."
+  "Highlight Org headings based on 'org-ranker-evaluate-highlights'.
+A heading cannot have more than one highlight color. If there are multiple highlight rules that match a single headline, the one that was defined first will take precedence. In practice, the higher a highlight rule is in the org-buffer itself, the higher its priority."
   (interactive)
   (org-map-entries
    (lambda ()
      (let ((color (org-ranker-evaluate-highlights (org-ranker-get-highlights))))
-       (when color
-	 (org-ranker-highlight-current-line color))))))
+       (unless (string= (org-get-heading t t t t) org-ranker-exclude-header-name)
+	 (when color
+	   (org-ranker-highlight-current-line color)
+	   ;;(insert color)
+	   ))))))
 
 (defun org-ranker-manual-highlight (color)
   "Manually apply a highlight to the current line with the specified COLOR."
   (interactive "sEnter color (e.g., #ff0000): ")
   (org-ranker-highlight-current-line color))
+
+;;; Import
+;; From CSV
+;; From JSON?
+;; From YAML?
+
+(defun org-ranker-get-csv-headers (csv-file &optional delimiter row-separator)
+  "Get the headers from the first row of a CSV file.
+CSV-FILE is the file path.
+DELIMITER specifies the column delimiter (default: \",\").
+ROW-SEPARATOR specifies the row separator (default: newline)."
+  (let ((delimiter (or delimiter ","))
+	(row-separator (or row-separator "\n"))
+	headers)
+    (with-temp-buffer
+      (insert-file-contents csv-file)
+      (let ((first-line (car (split-string (buffer-string) row-separator t))))
+	(setq headers (split-string first-line delimiter t))))
+    headers))
+
+(defun org-ranker-import-csv-arguments ()
+  "Get the arguments for 'org-ranker-import-csv'."
+  (let* ((file (read-file-name "CSV File: "))
+	 (name-column (completing-read "Select Header Column: " (org-ranker-get-csv-headers file))))
+    (list file name-column)))
+    
+
+(defun org-ranker-import-csv (csv-file header-column &optional first-line-contains-keys keys)
+  (interactive (org-ranker-import-csv-arguments))
+  (with-temp-buffer
+    (insert-file-contents csv-file)
+    (let* ((first-line-keys (or first-line-contains-keys t))
+	   (contents (csv-parse-buffer first-line-keys (current-buffer)))
+	   )
+      (with-current-buffer (generate-new-buffer "*Org-Ranker CSV Import*")
+	(org-mode)
+	;; Loop over each line (row) in the CSV data
+	(mapc (lambda (line)
+		(let* ((headline (cdr (assoc header-column line)))
+		       (properties (cl-remove-if-not #'cdr line)))
+		  (if headline
+		      (progn
+			;; Create the org-mode heading
+			(insert (format "* %s\n" headline))
+
+			;;Add properties under the headline
+			(mapc (lambda (prop) ;; Loop over each field
+				(org-entry-put nil (car prop) (cdr prop)))
+			      properties))
+			(error "Header column '%s' not found in row" header-column))))
+	      contents)
+	(switch-to-buffer (current-buffer))))))
 
 ;;; Wrapper
 (defun org-ranker-sort ()
@@ -585,13 +675,17 @@ functions individually:
   (org-ranker-unexclude)
   (org-ranker-sort-headlines)
   (org-ranker-highlight)
+  (org-cycle-overview)
+  (goto-char (point-min))
   )
 
 (provide 'org-ranker)
 
 ;;; org-ranker.el ends here
 
-
-;; TODO: '~~', '!~' not being read correctly by org-ranker-parse-rule
-;; TODO: Generalize get-excludes and get-rules to use custom keyword variables
+;; TODO: Add import types
+;; TODO: Add interface functions
+;;     - Hydra
+;;     - Add keyword (to top of buffer, in sections maybe?)
+;; TODO: Minor mode (pros/cons... necessary?)
 
