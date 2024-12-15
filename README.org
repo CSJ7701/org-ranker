@@ -21,6 +21,7 @@ This package has not been added to Elpa or Melpa. You can install manually, or u
    (straight-use-package
     '(org-ranker :type git :host github :repo "CSJ7701/org-ranker"))
 #+end_src
+
 ** Manual Installation
 #+begin_src shell
 git clone https://github.com/CSJ7701/org-ranker.el
@@ -42,7 +43,9 @@ Each rule consists of:
 
 
 Org-Ranker will look for all headlines with that property, then match the headline's value to the rule's value based on the defined comparator.
+
 If the headline matches the rule, the headline will receive the score defined in the rule.
+
 A headline's score is cumulative, meaning that, if it matches multiple rules, that headline's score will be the sum of all resultant score values from each rule.
 
 *** Valid comparators
@@ -67,8 +70,12 @@ A headline's score is cumulative, meaning that, if it matches multiple rules, th
   ,#+RANKER-RULE: AGE>30:10
 #+end_src
 
+------
+
 _This functionality is WIP._
+
 The RANKER-RULE keyword can also take a function as an argument.
+
 This function must take keyword and value as an argument, and return the score to assign the the headline.
 #+begin_src org
 #+RANKER-RULE: LOCATION:(my-custom-score-func)
@@ -83,6 +90,7 @@ An example of a valid function:
 
 ** RANKER-EXCLUDE
 The =RANKER-EXCLUDE= keyword moves headlines that match the specified criteria to an 'EXCLUDE' heading at the end of your org document.
+
 Each rule consists of:
 - A property
 - A comparator
@@ -90,6 +98,7 @@ Each rule consists of:
 
   
 Org-Ranker will look for all headlines with that property, then match the headline's value to the rule's value based on the defined comparator.
+
 If the headline matches the rule, the headline will be moved to an 'EXCLUDE' heading at the end of the org document.
 
 *** Valid Comparators
@@ -111,6 +120,7 @@ Each rule consists of:
 
   
 Org-Ranker will look for all headlines with that property, then match the headline's value to the rule's value based on the defined comparator.
+
 If the headline matches the rule, the headline will be highlighted with the defined color.
 
 *** Valid Comparators
@@ -194,6 +204,7 @@ The same as those defined in =RANKER-RULE=.
 
 * Contributing
 Contributions are welcome!
-If there is something that does not work correctly, please open an [issue](https://github.com/CSJ7701/org-ranker/issues).
+
+If there is something that does not work correctly, please open an [[https://github.com/CSJ7701/org-ranker/issues][issue]].
 
 * License
