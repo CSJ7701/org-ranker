@@ -1,0 +1,54 @@
+#+RANKER-RULE: AGE>25:10
+#+RANKER-RULE: LOCATION~~Florida:-5
+#+RANKER-RULE: GENDER!=F:-2
+
+#+RANKER-HIGHLIGHT: LOCATION==Maine:#00ffff
+
+#+RANKER-EXCLUDE: COLOR==Orange
+
+* John
+:PROPERTIES:
+:Name:     John
+:Age:      40
+:Location: Maine
+:Gender:   N
+:Color:    Green
+:ORG-RANKER-SCORE: 8
+:END:
+* Alice
+:PROPERTIES:
+:Name:     Alice
+:Age:      30
+:Location: Florida
+:Gender:   F
+:Color:    Red
+:ORG-RANKER-SCORE: 5
+:END:
+* Jim
+:PROPERTIES:
+:Name:     Jim
+:Age:      20
+:Location: Maine
+:Gender:   M
+:Color:    Yellow
+:ORG-RANKER-SCORE: -2
+:END:
+* Bob
+:PROPERTIES:
+:Name:     Bob
+:Age:      25
+:Location: California
+:Gender:   M
+:Color:    Green
+:ORG-RANKER-SCORE: -2
+:END:
+* EXCLUDE                                                           :exclude:
+** Alex
+:PROPERTIES:
+:Name:     Alex
+:Age:      55
+:Location: Connecticut
+:Gender:   M
+:Color:    Orange
+:ORG-RANKER-SCORE: 8
+:END:
