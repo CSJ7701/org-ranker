@@ -1,0 +1,179 @@
+#+TITLE: Org-Ranker
+
+Org Ranker is a small project, which allows you to sort, reorder, and examine structured data as an org file.
+
+* About Org-Ranker
+
+Org Ranker aims to simplify the examination of structured data within Emacs. It enables users to define top-level headlines with properties and then analyze and sort these headlines according to customized rules.
+
+Org Ranker uses keywords to define rules. It matches headlines within an org file against these rules, and calculates a 'score' to assign each headline. It then sorts all headlines in the document according to their score using a relatively simple merge-sort algorithm.
+- There are likely faster ways to implement this functionality, but I am relatively unexperience with using sorting algorithms in practice, and this works for now. I have tested this with a document containing about 250 headlines, each with about 7 properties, and the entire document sorts in about 15 seconds.
+
+Org Ranker also allows the user to define rules to exclude headlines from sorting, or rules to highlight certain headings using an overlay. Any headline which matches one of these exclusion rules is placed under a designated 'EXCLUDE' heading at the end of the document.
+
+* Features
+- Sort org headlines
+- Highlight org headlines interactively
+* Screenshots
+_WIP_
+
+* Installation
+This package has not been added to Elpa or Melpa. You can install manually, or use straight.el.
+** Straight.el
+#+begin_src emacs-lisp
+   (straight-use-package
+    '(org-ranker :type git :host github :repo "CSJ7701/org-ranker"))
+#+end_src
+** Manual Installation
+#+begin_src shell
+git clone https://github.com/CSJ7701/org-ranker.el
+#+end_src
+Add the cloned files to your load path, then in your init.el file:
+#+begin_src emacs-lisp
+(require 'org-ranker)
+#+end_src
+
+* Usage
+Org-Ranker relies on the use of keywords to sort org-mode headlines based on the properties stored in those headlines.
+There are 3 types of keywords you can use, `RANKER-RULE`, `RANKER-EXCLUDE`, or `RANKER-HIGHLIGHT`.
+** RANKER-RULE
+Defines a property, comparator, value, and score.
+Org-Ranker will look for all headlines with that property, then match the headline's value to the rule's value based on the defined comparator.
+If the headline matches the rule, the headline will receive the score defined in the rule.
+A headline's score is cumulative, meaning that, if it matches multiple rules, that headline's score will be the sum of all resultant score values from each rule.
+
+Valid comparators are:
+- '==' - string or number matching. Requires an exact match.
+- '~~' - substring matching. Requires the headline's value to contain the rule's value.
+- '!=' - Not Equal. Matches headlines whose values are not exactly the rule's value.
+- '!~' - Does not contain. Matches headlines whose values do not contain the rule's value.
+- '>', '<', '>=', '<=' - Numerical Comparison. Note that using these to compare string values will not throw an error, but may result in unexpected matching.
+
+Some examples of valid rules include:
+#+begin_src org
+  # Assigns 2 points to all headlines with a 'GENDER' property of 'F'
+  ,#+RANKER-RULE: GENDER==F:2
+
+  # Assigns 10 points to all headlines with a 'LOCATION' property containing 'Florida'
+  ,#+RANKER-RULE: LOCATION~~Florida:10
+
+  # Assigns -20 points to all headlines with a 'LOCATION' property that is not 'Texas'.
+  ,#+RANKER-RULE: LOCATION!=Texas:-20
+
+  # Assigns 10 points to all headlines with an 'AGE' property greater than 30.
+  ,#+RANKER-RULE: AGE>30:10
+#+end_src
+
+_This functionality is WIP._
+The RANKER-RULE keyword can also take a function as an argument.
+This function must take keyword and value as an argument, and return the score to assign the the headline.
+#+begin_src org
+#+RANKER-RULE: LOCATION:(my-custom-score-func)
+#+end_src
+
+An example of a valid function:
+#+begin_src emacs-lisp
+  (defun my-custom-score-func
+    ; WIP
+      )
+#+end_src
+
+** RANKER-EXCLUDE
+Defines a property, comparator, and a value.
+Org-Ranker will look for all headlines with that property, then match the headline's value to the rule's value based on the defined comparator.
+If the headline matches the rule, the headline will be moved to an 'EXCLUDE' heading at the end of the org document.
+Valid comparators are the same as defined above.
+
+Examples of valid rules include:
+#+begin_src org
+  ,#+RANKER-EXCLUDE: GENDER==M
+  ,#+RANKER-EXCLUDE: LOCATION~~Connecticut
+#+end_src
+
+** RANKER-HIGHLIGHT
+Defines a property, comparator, value, and a color (in hex-code format)
+Org-Ranker will look for all headlines with that property, then match the headline's value to the rule's value based on the defined comparator.
+If the headline matches the rule, the headline will be highlighted with the defined color.
+Valid comparators are defined in the 'RANKER-RULE' section.
+
+Examples of valid rules include:
+#+begin_src org
+#+RANKER-HIGHLIGHT: LOCATION==12:#ff0000
+#+RANKER-HIGHLIGHT: TEST==TEST VALUE:#ffd700
+#+RANKER-HIGHLIGHT: LOCATION==12:#d2b48c
+#+RANKER-HIGHLIGHT: ORG-RANKER-SCORE>20:#00ffff
+#+RANKER-HIGHLIGHT: LOCATION!~FLORIDA:#dda0dd
+#+RANKER-HIGHLIGHT: LOCATION~~FLORIDA:#000000000000
+#+RANKER-HIGHLIGHT: TEST==TEST_VALUE:#ffd700
+#+end_src
+
+** Example Document
+#+begin_src org
+
+#+RANKER-RULE: GENDER==F:2
+#+RANKER-RULE: LOCATION~~Florida:5
+#+RANKER-RULE: LOCATION==12:-5
+#+RANKER-RULE: LOCATION!=12:-5
+#+RANKER-RULE: LOCATION!~Florida:10
+#+RANKER-RULE: CITYNAME:(my-city-score-func)
+
+#+RANKER-EXCLUDE: LOCATION==11
+
+#+RANKER-HIGHLIGHT: LOCATION==12:#ff0000
+#+RANKER-HIGHLIGHT: TEST==TEST VALUE:#ffd700
+#+RANKER-HIGHLIGHT: LOCATION==12:#d2b48c
+#+RANKER-HIGHLIGHT: ORG-RANKER-SCORE>20:#00ffff
+#+RANKER-HIGHLIGHT: LOCATION!~FLORIDA:#dda0dd
+#+RANKER-HIGHLIGHT: LOCATION~~FLORIDA:#000000000000
+#+RANKER-HIGHLIGHT: TEST==QQQ:#ffd700
+
+ * Heading 4
+  :PROPERTIES:
+  :GENDER: F
+  :TEST: TEST VALUE
+  :ORG-RANKER-BASE-SCORE: 10
+  :ORG-RANKER-SCORE: 17
+  :END:
+Some content under heading 4.
+ * Heading 5
+:PROPERTIES:
+:GENDER:   F
+:LOCATION: 12
+:ORG-RANKER-SCORE: 7
+:END:
+Some content under heading 5.
+
+ * Heading 2
+  :PROPERTIES:
+  :GENDER: M
+  :LOCATION: 12
+  :ORG-RANKER-SCORE: 5
+  :END:
+Some content under heading 2.
+
+ * Heading 3
+  :PROPERTIES:
+  :LOCATION: South Florida
+  :ORG-RANKER-SCORE: 0
+  :END:
+Some content under heading 3.
+
+ * Heading 1
+  :PROPERTIES:
+  :LOCATION: FLOriDA
+  :ORG-RANKER-SCORE: 0
+  :END:
+Some content under heading 1.
+
+ * EXCLUDE                                                           :exclude:
+:PROPERTIES:
+:ORG-RANKER-SCORE: 5
+:END:
+
+
+#+end_src
+* Configuration
+
+* Contributing
+
+* License
