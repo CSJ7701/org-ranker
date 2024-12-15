@@ -43,11 +43,11 @@ If the headline matches the rule, the headline will receive the score defined in
 A headline's score is cumulative, meaning that, if it matches multiple rules, that headline's score will be the sum of all resultant score values from each rule.
 
 Valid comparators are:
-- '====' - string or number matching. Requires an exact match.
-- '=~~=' - substring matching. Requires the headline's value to contain the rule's value.
-- '=!==' - Not Equal. Matches headlines whose values are not exactly the rule's value.
-- '=!~=' - Does not contain. Matches headlines whose values do not contain the rule's value.
-- '=>=', '=<=', '=>==', '=<==' - Numerical Comparison. Note that using these to compare string values will not throw an error, but may result in unexpected matching.
+- ~'=='~ - string or number matching. Requires an exact match.
+- ='~~'= - substring matching. Requires the headline's value to contain the rule's value.
+- ='!='= - Not Equal. Matches headlines whose values are not exactly the rule's value.
+- ='!~'= - Does not contain. Matches headlines whose values do not contain the rule's value.
+- ='>'=, ='<'=, ='>='=, ='<='= - Numerical Comparison. Note that using these to compare string values will not throw an error, but may result in unexpected matching.
 
 Some examples of valid rules include:
 #+begin_src org
