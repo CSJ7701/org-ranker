@@ -110,65 +110,65 @@ Examples of valid rules include:
 ** Example Document
 #+begin_src org
 
-  ,#+RANKER-RULE: GENDER==F:2
-  ,#+RANKER-RULE: LOCATION~~Florida:5
-  ,#+RANKER-RULE: LOCATION==12:-5
-  ,#+RANKER-RULE: LOCATION!=12:-5
-  ,#+RANKER-RULE: LOCATION!~Florida:10
-  ,#+RANKER-RULE: CITYNAME:(my-city-score-func)
+   ,#+RANKER-RULE: GENDER==F:2
+   ,#+RANKER-RULE: LOCATION~~Florida:5
+   ,#+RANKER-RULE: LOCATION==12:-5
+   ,#+RANKER-RULE: LOCATION!=12:-5
+   ,#+RANKER-RULE: LOCATION!~Florida:10
 
-  ,#+RANKER-EXCLUDE: LOCATION==11
+   ,#+RANKER-EXCLUDE: LOCATION==11
 
-  ,#+RANKER-HIGHLIGHT: LOCATION==12:#ff0000
-  ,#+RANKER-HIGHLIGHT: TEST==TEST VALUE:#ffd700
-  ,#+RANKER-HIGHLIGHT: LOCATION==12:#d2b48c
-  ,#+RANKER-HIGHLIGHT: ORG-RANKER-SCORE>20:#00ffff
-  ,#+RANKER-HIGHLIGHT: LOCATION!~FLORIDA:#dda0dd
-  ,#+RANKER-HIGHLIGHT: LOCATION~~FLORIDA:#000000000000
-  ,#+RANKER-HIGHLIGHT: TEST==QQQ:#ffd700
+   ,#+RANKER-HIGHLIGHT: LOCATION==12:#ff0000
+   ,#+RANKER-HIGHLIGHT: TEST==TEST VALUE:#ffd700
+   ,#+RANKER-HIGHLIGHT: LOCATION==12:#d2b48c
+   ,#+RANKER-HIGHLIGHT: ORG-RANKER-SCORE>20:#00ffff
+   ,#+RANKER-HIGHLIGHT: LOCATION!~FLORIDA:#dda0dd
+   ,#+RANKER-HIGHLIGHT: LOCATION~~FLORIDA:#000000000000
+   ,#+RANKER-HIGHLIGHT: TEST==QQQ:#ffd700
 
-* Heading 4
-    :PROPERTIES:
-    :GENDER: F
-    :TEST: TEST VALUE
-    :ORG-RANKER-BASE-SCORE: 10
-    :ORG-RANKER-SCORE: 17
-    :END:
-  Some content under heading 4.
-* Heading 5
-  :PROPERTIES:
-  :GENDER:   F
-  :LOCATION: 12
-  :ORG-RANKER-SCORE: 7
-  :END:
-  Some content under heading 5.
+  ,* Heading 4
+     :PROPERTIES:
+     :GENDER: F
+     :TEST: TEST VALUE
+     :ORG-RANKER-BASE-SCORE: 10
+     :ORG-RANKER-SCORE: 17
+     :END:
+   Some content under heading 4.
 
-* Heading 2
+  ,* Heading 5
+     :PROPERTIES:
+     :GENDER:   F
+     :LOCATION: 12
+     :ORG-RANKER-SCORE: 7
+     :END:
+   Some content under heading 5.
+
+  ,* Heading 2
+     :PROPERTIES:
+     :GENDER: M
+     :LOCATION: 12
+     :ORG-RANKER-SCORE: 5
+     :END:
+   Some content under heading 2.
+
+  ,* Heading 3
+     :PROPERTIES:
+     :LOCATION: South Florida
+     :ORG-RANKER-SCORE: 0
+     :END:
+   Some content under heading 3.
+
+  ,* Heading 1
+     :PROPERTIES:
+     :LOCATION: FLOriDA
+     :ORG-RANKER-SCORE: 0
+     :END:
+   Some content under heading 1.
+
+  ,* EXCLUDE                                                           :exclude:
    :PROPERTIES:
-    :GENDER: M
-    :LOCATION: 12
-    :ORG-RANKER-SCORE: 5
-    :END:
-  Some content under heading 2.
-
-* Heading 3
-    :PROPERTIES:
-    :LOCATION: South Florida
-    :ORG-RANKER-SCORE: 0
-    :END:
-  Some content under heading 3.
-
-* Heading 1
-    :PROPERTIES:
-    :LOCATION: FLOriDA
-    :ORG-RANKER-SCORE: 0
-    :END:
-  Some content under heading 1.
-
-* EXCLUDE                                                           :exclude:
-  :PROPERTIES:
-  :ORG-RANKER-SCORE: 5
-  :END:
+   :ORG-RANKER-SCORE: 5
+   :END:
 #+end_src
 * Configuration
 
