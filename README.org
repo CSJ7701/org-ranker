@@ -1,9 +1,5 @@
 #+TITLE: Org-Ranker
 
-Org Ranker is a small project, which allows you to sort, reorder, and examine structured data as an org file.
-
-* About Org-Ranker
-
 Org Ranker aims to simplify the examination of structured data within Emacs. It enables users to define top-level headlines with properties and then analyze and sort these headlines according to customized rules.
 
 Org Ranker uses keywords to define rules. It matches headlines within an org file against these rules, and calculates a 'score' to assign each headline. It then sorts all headlines in the document according to their score using a relatively simple merge-sort algorithm.
@@ -14,6 +10,7 @@ Org Ranker also allows the user to define rules to exclude headlines from sortin
 * Features
 - Sort org headlines
 - Highlight org headlines interactively
+- Import from CSV to ORG
 * Screenshots
 _WIP_
 
@@ -34,22 +31,28 @@ Add the cloned files to your load path, then in your init.el file:
 #+end_src
 
 * Usage
-Org-Ranker relies on the use of keywords to sort org-mode headlines based on the properties stored in those headlines.
-There are 3 types of keywords you can use, `RANKER-RULE`, `RANKER-EXCLUDE`, or `RANKER-HIGHLIGHT`.
+Org Ranker is designed to sort org-mode headlines based on the properties stored within them. It allows you to define rules using specific keywords (=RANKER-RULE=, =RANKER-EXCLUDE=, =RANKER-HIGHLIGHT=) to customize the ranking, exclusion, or highlighting of your org-mode document.
 ** RANKER-RULE
-Defines a property, comparator, value, and score.
+The =RANKER-RULE= keyword is used to assign a score to headlines based on their properties.
+Each rule consists of:
+- A property
+- A comparator
+- A value
+- A score (which can be negative)
+
+
 Org-Ranker will look for all headlines with that property, then match the headline's value to the rule's value based on the defined comparator.
 If the headline matches the rule, the headline will receive the score defined in the rule.
 A headline's score is cumulative, meaning that, if it matches multiple rules, that headline's score will be the sum of all resultant score values from each rule.
 
-Valid comparators are:
-- ~'=='~ - string or number matching. Requires an exact match.
-- ='~~'= - substring matching. Requires the headline's value to contain the rule's value.
-- ='!='= - Not Equal. Matches headlines whose values are not exactly the rule's value.
+*** Valid comparators
+- ~'=='~ - String or number matching. Requires an exact match.
+- ='~~'= - Substring matching. Requires the headline's value to contain the rule's value.
+- ~'!='~ - Not Equal. Matches headlines whose values are not exactly the rule's value.
 - ='!~'= - Does not contain. Matches headlines whose values do not contain the rule's value.
 - ='>'=, ='<'=, ~'>='~, ~'<='~ - Numerical Comparison. Note that using these to compare string values will not throw an error, but may result in unexpected matching.
 
-Some examples of valid rules include:
+*** Examples
 #+begin_src org
   # Assigns 2 points to all headlines with a 'GENDER' property of 'F'
   ,#+RANKER-RULE: GENDER==F:2
@@ -79,24 +82,41 @@ An example of a valid function:
 #+end_src
 
 ** RANKER-EXCLUDE
-Defines a property, comparator, and a value.
+The =RANKER-EXCLUDE= keyword moves headlines that match the specified criteria to an 'EXCLUDE' heading at the end of your org document.
+Each rule consists of:
+- A property
+- A comparator
+- A value
+
+  
 Org-Ranker will look for all headlines with that property, then match the headline's value to the rule's value based on the defined comparator.
 If the headline matches the rule, the headline will be moved to an 'EXCLUDE' heading at the end of the org document.
-Valid comparators are the same as defined above.
 
-Examples of valid rules include:
+*** Valid Comparators
+The same as those defined in =RANKER-RULE=.
+
+*** Examples
 #+begin_src org
   ,#+RANKER-EXCLUDE: GENDER==M
   ,#+RANKER-EXCLUDE: LOCATION~~Connecticut
 #+end_src
 
 ** RANKER-HIGHLIGHT
-Defines a property, comparator, value, and a color (in hex-code format)
+The =RANKER-HIGHLIGHT= keyword highlights headings based on their properties.
+Each rule consists of:
+- A property
+- A comparator
+- A value
+- A color (in hex-code format)
+
+  
 Org-Ranker will look for all headlines with that property, then match the headline's value to the rule's value based on the defined comparator.
 If the headline matches the rule, the headline will be highlighted with the defined color.
-Valid comparators are defined in the 'RANKER-RULE' section.
 
-Examples of valid rules include:
+*** Valid Comparators
+The same as those defined in =RANKER-RULE=.
+
+*** Examples
 #+begin_src org
 #+RANKER-HIGHLIGHT: LOCATION==12:#ff0000
 #+RANKER-HIGHLIGHT: TEST==TEST VALUE:#ffd700
@@ -173,5 +193,7 @@ Examples of valid rules include:
 * Configuration
 
 * Contributing
+Contributions are welcome!
+If there is something that does not work correctly, please open an [issue](https://github.com/CSJ7701/org-ranker/issues).
 
 * License
