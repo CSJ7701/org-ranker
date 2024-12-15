@@ -6,22 +6,69 @@
 ;; Package-Requires: ((emacs "27.1") (org "9.4"))
 
 ;;; Commentary:
-
-;; org-ranker sorts Org-mode headlines based on user-defined criteria.
+;;
+;; `org-ranker.el` is an Org-mode extension that allows users to sort Org-mode
+;; headlines based on custom criteria defined through properties and keywords.
+;; This package provides functionality to assign scores to headlines, apply 
+;; sorting based on those scores, and exclude or highlight certain entries.
+;;
+;; Main features include:
+;; - Sorting headlines with a "score" property.
+;; - Support for custom rules to define the score based on properties.
+;; - Exclusion of specific entries based on rules.
+;; - Highlighting specific entries based on custom criteria.
+;;
+;; Usage:
+;; 1. Define `RANKER-RULE` headers with specific rules to assign scores to headings.
+;; 2. Use `RANKER-EXCLUDE` to specify headings that should not be included in sorting.
+;; 3. Apply `RANKER-HIGHLIGHT` to mark certain headings for visual emphasis.
+;; 4. The package provides various customization options for adjusting sorting behavior.
+;;
+;; Example:
+;;   #+RANKER-RULE: PROPERTY==high:value
+;;   #+RANKER-RULE: LOCATION~=substring:other_value
+;;   #+RANKER-EXCLUDE: KEYWORD==TEST
+;;
+;;   * Top-level heading
+;;     :PROPERTIES:
+;;     :PROPERTY: high
+;;     :ORG-RANKER-SCORE: value
+;;     :END:
+;;   
+;;   * Second heading
+;;     :PROPERTIES:
+;;     :LOCATION: String with a substring
+;;     :ORG-RANKER-SCORE: 20
+;;     :END:
+;;
+;;   * Excluded heading
+;;      :PROPERTIES:
+;;      :KEYWORD: TEST
+;;      :END:
+;; 
+;; Customize the behavior via `M-x customize-group RET org-ranker RET`.
+;;
+;; For more details on available keywords, see the documentation below.
+;;
+;; To get started, load the package and apply sorting with:
+;;   M-x org-ranker-sort
+;;
+;; This package requires Emacs 27.1 and Org-mode 9.4 or later.
 
 ;;; Code:
 
 (require 'org)
 (require 'csv)
+(require 'hydra)
 
 ;;; =======  Variables  =======
 
-;; Properties
 (defcustom org-ranker-score-property "ORG-RANKER-SCORE"
-  "The property name that org-ranker uses to retrieve scores for sorting.
+    "The property name that org-ranker uses to retrieve scores for sorting.
 Defaults to 'ORG-RANKER-SCORE'."
   :type 'string
   :group 'org-ranker)
+
 (defcustom org-ranker-base-score-property "ORG-RANKER-BASE-SCORE"
   "The property name that org-ranker uses to set a base score.
 Base scores are not changed by org-ranker, but contribute to the heading's score. They must be set manually.
@@ -29,24 +76,24 @@ Defaults to 'ORG-RANKER-BASE-SCORE'."
   :type 'string
   :group 'org-ranker)
 
-;; Keywords
 (defcustom org-ranker-rule-keyword "RANKER-RULE"
   "The keyword name that org-ranker uses to score rules in each buffer.
 Defaults to 'RANKER-RULE'."
   :type 'string
   :group 'org-ranker)
+
 (defcustom org-ranker-exclude-keyword "RANKER-EXCLUDE"
   "The keyword name that org-ranker uses to identify exclusion rules in each buffer.
 Defaults to 'RANKER-EXCLUDE'."
   :type 'string
   :group 'org-ranker)
+
 (defcustom org-ranker-highlight-keyword "RANKER-HIGHLIGHT"
   "The keyword name that org-ranker uses to identify highlight rules in each buffer.
 Defaults to 'RANKER-HIGHLIGHT'."
   :type 'string
   :group 'org-ranker)
 
-;; Header Values
 (defcustom org-ranker-exclude-header-name "EXCLUDE"
   "The name of the top-level heading under which org-ranker will place all excluded entries.
 Defaults to 'EXCLUDE'."
@@ -59,7 +106,6 @@ Defaults to 'exclude'."
   :type 'string
   :group 'org-ranker)
 
-;; Code Variables
 (defcustom org-ranker-rule-regex "\\([^~=><!~]+\\)\\(~~\\|!~\\|[~=><!~]=?\\)\\([^:]*\\):\\(.*\\)"
   "The regex string org-ranker uses to identify and split rule strings.
 Used in 'org-ranker-get-rules'."
@@ -154,7 +200,78 @@ Used in 'org-ranker-get-highlights'."
     (dotimes (_n)
       (org-metadown))))
 
-;;; Sorting
+;;; ===== Interface =====
+
+(defun org-ranker-insert-keyword (keyword regex content)
+  "Insert or update a line with the given KEYWORD and CONTENT, ensuring it matches REGEX.
+This function ensures keywords of the same type are grouped together."
+  (if (not (string-match-p regex content))
+      (message "Input does not match the expected format.")
+    (save-excursion
+      (goto-char (point-min))
+      ;; Search for the last instance of the keyword section
+      (let ((section-found nil))
+        (while (re-search-forward (format "^#\\+%s:.*" (regexp-quote keyword)) nil t)
+          (setq section-found t))
+        ;; Insert the keyword in the right place
+        (if section-found
+            ;; If the section exists, insert the new content right after the last match
+            (progn
+              (end-of-line)
+              (insert (format "\n#+%s: %s" keyword content)))
+          ;; Otherwise, add a new section at the top
+          (goto-char (point-min))
+          (insert (format "#+%s: %s\n" keyword content)))))))
+
+(defun org-ranker-add-rule (rule)
+  "Add RULE keyword to the org document at point."
+  (interactive "sRULE: ")
+  (let ((regex org-ranker-rule-regex)
+        (keyword org-ranker-rule-keyword))
+    (org-ranker-insert-keyword keyword regex rule)))
+
+(defun org-ranker-add-exclude (exclude)
+  "Add EXCLUDE keyord to the org document at point."
+  (interactive "sEXCLUDE: ")
+  (let ((regex org-ranker-exclude-regex)
+        (keyword org-ranker-exclude-keyword))
+    (org-ranker-insert-keyword keyword regex exclude)))
+
+(defun org-ranker-add-highlight (highlight)
+  "Add HIGHLIGHT keyword to the org document at point."
+  (interactive "sHIGHLIGHT: ")
+  (let ((regex org-ranker-highlight-regex)
+        (keyword org-ranker-highlight-keyword))
+    (org-ranker-insert-keyword keyword regex highlight)))
+
+(defhydra org-ranker-hydra (:color blue :hint nil)
+  "Org Ranker Actions: "
+  ;; Basic Actions
+  ("s" org-ranker-sort "Process Rules" :column "Common")
+  ("b" org-ranker-set-base-score "Set Entry's Base Score" :column "Common")
+  ("r" org-ranker-add-rule "Add Rule" :column "Common")
+  ("x" org-ranker-add-exclude "Add Exclude" :column "Common")
+  ("h" org-ranker-add-highlight "Add Highlight" :column "Common")
+  ;; Manual
+  ("mh" org-ranker-manual-highlight "Highlight Entry" :column "Manual")
+  ("mH" org-ranker-remove-highlight "Remove Highlight on Entry" :column "Manual")
+  ("mp" org-ranker-move-headline-up "Move Up" :column "Manual")
+  ("mn" org-ranker-move-headline-down "Move Down" :column "Manual")
+  ("ma" org-ranker-move-headline-start "Move to Start" :column "Manual")
+  ("me" org-ranker-move-headline-end "Move to End" :column "Manual")
+  ("mP" org-ranker-move-headline-up-n "Move Up N Lines" :column "Manual")
+  ("mN" org-ranker-move-headline-down-n "Move Down N Lines" :column "Manual")
+  ;; Manual Actions
+  ("]" org-ranker-exclude "Process New Excludes" :column "Actions")
+  ("[" org-ranker-unexclude "Remove Old Excludes" :column "Actions")
+  ("{" org-ranker-highlight "Process New Highlights" :column "Actions")
+  ("}" org-ranker-remove-highlights "Remove Old Highlights" :column "Actions")
+  ("'" org-ranker-sort "Sort Headlines by Score" :column "Actions")
+  ("\"" org-ranker-populate-scores "Populate Scores" :column "Actions")
+  ;; Import
+  ("c" org-ranker-import-csv "Import CSV File" :column "Import"))
+
+;;; ===== Sorting =====
 (defun org-ranker-get-headlines-with-scores ()
   "Retrieve a list of headlines with their scores from the current Org buffer."
   (delq nil
@@ -684,8 +801,7 @@ functions individually:
 ;;; org-ranker.el ends here
 
 ;; TODO: Add import types
-;; TODO: Add interface functions
-;;     - Hydra
-;;     - Add keyword (to top of buffer, in sections maybe?)
-;; TODO: Minor mode (pros/cons... necessary?)
+;;       - YAML
+;;       - JSON
+;;       Not sure these fit the structure of this package
 
