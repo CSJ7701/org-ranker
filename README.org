@@ -13,11 +13,13 @@ Org Ranker also allows the user to define rules to exclude headlines from sortin
 - Import from CSV to ORG
 * Screenshots
 *CSV Import*
+
 You can import CSV files to a temporary org-mode buffer.
 [[file:assets/csv-import.gif]]
 
 
 *Sort Headlines*
+
 Once you define some rules, you can apply them to sort your headlines and apply any highlighting/exclude rules that you have specified.
 [[file:assets/sort-headlines.gif]]
 * Installation
