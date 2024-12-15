@@ -12,8 +12,8 @@ Org Ranker also allows the user to define rules to exclude headlines from sortin
 - Highlight org headlines interactively
 - Import from CSV to ORG
 * Screenshots
-_WIP_
-
+You can import CSV files to a temporary org-mode buffer.
+[[file:assets/csv-import.gif]]
 * Installation
 This package has not been added to Elpa or Melpa. You can install manually, or use straight.el.
 ** Straight.el

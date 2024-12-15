@@ -1,3 +1,6 @@
-Name,Age,Location
-Alice,30,Florida
-Bob,25,California
+Name,Age,Location,Gender,Color
+Alice,30,Florida,F,Red
+Bob,25,California,M,Green
+John,40,Maine,N,Green
+Alex,55,Connecticut,M,Orange
+Jim,20,Maine,M,Yellow
