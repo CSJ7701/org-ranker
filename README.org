@@ -201,6 +201,8 @@ The same as those defined in =RANKER-RULE=.
    :END:
 #+end_src
 * Configuration
+Almost all of Org Ranker's behavior can be modified to fit your specific preference.
+Take a look at the =org-ranker= group in Emacs' customize interface to explore available options.
 
 * Contributing
 Contributions are welcome!
