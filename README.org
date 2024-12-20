@@ -14,50 +14,70 @@ Org Ranker also allows the user to define rules to exclude headlines from sortin
 - Import from CSV to ORG
 
 ** Functions
-_Basic Actions_
+*Basic Actions*
+
 These are the main functions that are to be the primary entry-points to this package's functionality.
 
 - =org-ranker-sort=
+  
   Process all defined rules; sort, highlight, and exclude across the entire org-document. This is the main function, intended to be the primary interaction unless you want to do something more specific manually.
 - =org-ranker-set-base-score=
+  
   Set the 'base-score' for a single headline. This score will not be affected by any org-ranker rules, but it will be factored in to the end score. This is useful if you want to tweak the score for a single entry without defining a rule to do so.
 - =org-ranker-add-rule=, =org-ranker-add-highlight=, =org-ranker-add-exclude=
+  
   Add a rule/highlight/exclude to the top of the file. This does not help you with rule syntax - you must still type valid information in yourself.
 - =org-ranker-examine-property=
+  
   Allows you to specify a property or properties that you want to examine. Will open an org popup buffer listing all values for that property/properties.
 - =org-ranker-list-properties=
+  
   Like =org-ranker-examine-property=, but list /all/ properties defined in the org-buffer.
 
-_Manual Actions (Individual)_
+*Manual Actions (Individual)*
+
 These are manual actions that allow you to perform specific, one-off actions on a single headline. Most of these actions will be undone by other functions in this package.
 
 - =org-ranker-manual-highlight=
+  
   Highlight a single entry with a user-defined color. Highlight will be removed on the next run of =org-ranker-highlight=, or =org-ranker-sort=.
 - =org-ranker-remove-highlight=
+  
   Remove highlighting from a single headline.
 - =org-ranker-move-headline-(up/down)=
+  
   Move a single headline up/down by one headline
 - =org-ranker-move-headline-(start/end)=
+  
   Move a single headline to the start/end of the buffer. Start will move the headline to the top of the buffer, after any initial content. End will move the headline to the end, or immediately before the "EXCLUDE" heading if it exists.
 - =org-ranker-move-headline-(up/down)-n=
+  
   Move a single headline up/down by n headings (prompts for a number of headlines).
 
-_Manual Actions (Group)_
+*Manual Actions (Group)*
+
 Most of these functions are provided for convenience. The are primarily functions that are smaller components of the 'Basic Action' functions, allowing for more granular interaction or actions that are used infrequently.
 
 - =org-ranker-exclude=
+  
   Process 'exclude' rules.
 - =org-ranker-unexclude=
+  
   "Include" headlines that are excluded, but don't match any exclude rules.
 - =org-ranker-highlight=
+  
   Process 'highlight' rules.
 - =org-ranker-remove-highlights=
+  
   Remove all highlights.
 - =org-ranker-sort-headlines=
+  
   Sort all headlines by their current score.
 - =org-ranker-populate-scores=
+  
   Calculate the score for all headlines based on all defined rules.
 - =org-ranker-import-csv=
+  
   Import a CSV to org-mode format. Prompts for a CSV column that will become the headline. CSV data is imported to org-mode format in a temporary buffer, and all columns will become properties under the headline.
 * Screenshots
 *CSV Import*
