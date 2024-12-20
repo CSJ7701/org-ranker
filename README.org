@@ -9,8 +9,56 @@ Org Ranker also allows the user to define rules to exclude headlines from sortin
 
 * Features
 - Sort org headlines
+- List headlines properties
 - Highlight org headlines interactively
 - Import from CSV to ORG
+
+** Functions
+_Basic Actions_
+These are the main functions that are to be the primary entry-points to this package's functionality.
+
+- =org-ranker-sort=
+  Process all defined rules; sort, highlight, and exclude across the entire org-document. This is the main function, intended to be the primary interaction unless you want to do something more specific manually.
+- =org-ranker-set-base-score=
+  Set the 'base-score' for a single headline. This score will not be affected by any org-ranker rules, but it will be factored in to the end score. This is useful if you want to tweak the score for a single entry without defining a rule to do so.
+- =org-ranker-add-rule=, =org-ranker-add-highlight=, =org-ranker-add-exclude=
+  Add a rule/highlight/exclude to the top of the file. This does not help you with rule syntax - you must still type valid information in yourself.
+- =org-ranker-examine-property=
+  Allows you to specify a property or properties that you want to examine. Will open an org popup buffer listing all values for that property/properties.
+- =org-ranker-list-properties=
+  Like =org-ranker-examine-property=, but list /all/ properties defined in the org-buffer.
+
+_Manual Actions (Individual)_
+These are manual actions that allow you to perform specific, one-off actions on a single headline. Most of these actions will be undone by other functions in this package.
+
+- =org-ranker-manual-highlight=
+  Highlight a single entry with a user-defined color. Highlight will be removed on the next run of =org-ranker-highlight=, or =org-ranker-sort=.
+- =org-ranker-remove-highlight=
+  Remove highlighting from a single headline.
+- =org-ranker-move-headline-(up/down)=
+  Move a single headline up/down by one headline
+- =org-ranker-move-headline-(start/end)=
+  Move a single headline to the start/end of the buffer. Start will move the headline to the top of the buffer, after any initial content. End will move the headline to the end, or immediately before the "EXCLUDE" heading if it exists.
+- =org-ranker-move-headline-(up/down)-n=
+  Move a single headline up/down by n headings (prompts for a number of headlines).
+
+_Manual Actions (Group)_
+Most of these functions are provided for convenience. The are primarily functions that are smaller components of the 'Basic Action' functions, allowing for more granular interaction or actions that are used infrequently.
+
+- =org-ranker-exclude=
+  Process 'exclude' rules.
+- =org-ranker-unexclude=
+  "Include" headlines that are excluded, but don't match any exclude rules.
+- =org-ranker-highlight=
+  Process 'highlight' rules.
+- =org-ranker-remove-highlights=
+  Remove all highlights.
+- =org-ranker-sort-headlines=
+  Sort all headlines by their current score.
+- =org-ranker-populate-scores=
+  Calculate the score for all headlines based on all defined rules.
+- =org-ranker-import-csv=
+  Import a CSV to org-mode format. Prompts for a CSV column that will become the headline. CSV data is imported to org-mode format in a temporary buffer, and all columns will become properties under the headline.
 * Screenshots
 *CSV Import*
 
@@ -211,6 +259,40 @@ The same as those defined in =RANKER-RULE=.
 * Configuration
 Almost all of Org Ranker's behavior can be modified to fit your specific preference.
 Take a look at the =org-ranker= group in Emacs' customize interface to explore available options.
+
+
+If you use the 'hydra' package, here is an example of a hydra that could simplify the interface to this package.
+
+#+begin_src emacs-lisp
+(defhydra org-ranker-hydra (:color blue :hint nil)
+  "Org Ranker Actions: "
+  ;; Basic Actions
+  ("s" org-ranker-sort "Process Rules" :column "Common")
+  ("b" org-ranker-set-base-score "Set Entry's Base Score" :column "Common")
+  ("r" org-ranker-add-rule "Add Rule" :column "Common")
+  ("x" org-ranker-add-exclude "Add Exclude" :column "Common")
+  ("h" org-ranker-add-highlight "Add Highlight" :column "Common")
+  ("p" org-ranker-examine-property "Examine Property" :column "Common")
+  ("P" org-ranker-list-properties "List All Properties" :column "Common")
+  ;; Manual
+  ("mh" org-ranker-manual-highlight "Highlight Entry" :column "Manual")
+  ("mH" org-ranker-remove-highlight "Remove Highlight on Entry" :column "Manual")
+  ("mp" org-ranker-move-headline-up "Move Up" :column "Manual")
+  ("mn" org-ranker-move-headline-down "Move Down" :column "Manual")
+  ("ma" org-ranker-move-headline-start "Move to Start" :column "Manual")
+  ("me" org-ranker-move-headline-end "Move to End" :column "Manual")
+  ("mP" org-ranker-move-headline-up-n "Move Up N Lines" :column "Manual")
+  ("mN" org-ranker-move-headline-down-n "Move Down N Lines" :column "Manual")
+  ;; Manual Actions
+  ("]" org-ranker-exclude "Process New Excludes" :column "Actions")
+  ("[" org-ranker-unexclude "Remove Old Excludes" :column "Actions")
+  ("{" org-ranker-highlight "Process New Highlights" :column "Actions")
+  ("}" org-ranker-remove-highlights "Remove Old Highlights" :column "Actions")
+  ("'" org-ranker-sort-headlines "Sort Headlines by Score" :column "Actions")
+  ("\"" org-ranker-populate-scores "Populate Scores" :column "Actions")
+  ;; Import
+  ("c" org-ranker-import-csv "Import CSV File" :column "Import"))
+#+end_src
 
 * Contributing
 Contributions are welcome!

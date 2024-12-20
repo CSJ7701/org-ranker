@@ -237,6 +237,69 @@ This function ensures keywords of the same type are grouped together."
         (keyword org-ranker-exclude-keyword))
     (org-ranker-insert-keyword keyword regex exclude)))
 
+(defun org-ranker-examine-property ()
+  "Prompt the user for a list of comma-separated properties and display their values from all org headlines in a temporary buffer."
+  (interactive)
+  (let ((properties (split-string (read-string "Enter comma-separated property names: ") ",\\s-*"))
+        (property-values (make-hash-table :test 'equal))
+        (temp-buffer "*Org Property Values*"))
+    ;; Iterate over all headlines in the buffer and collect values for each property
+    (org-map-entries
+     (lambda ()
+       (dolist (property properties)
+         (let ((value (org-entry-get (point) property)))
+           (when value
+             (puthash property
+                      (append (gethash property property-values) (list value))
+                      property-values))))))
+    ;; Open a temporary buffer and display values
+    (with-current-buffer (get-buffer-create temp-buffer)
+      (erase-buffer)
+      (org-mode)
+      (maphash
+       (lambda (property values)
+         (insert (format "* %s\n" property)) ;; Insert property as a headline
+         (dolist (val (delete-dups values)) ;; Insert unique values as list items
+           (insert (format "- %s\n" val))))
+       property-values)
+      (goto-char (point-min)))
+    (display-buffer temp-buffer)))
+
+
+(defun org-ranker-list-properties ()
+  "List all properties in the Org buffer and their values in a temporary buffer.
+Excludes certain predefined properties."
+  (interactive)
+  (let ((property-values (make-hash-table :test 'equal))
+        (excluded-properties '("CATEGORY" "FILE" "TODO" "PRIORITY" 
+                               "ORG-RANKER-SCORE" "BLOCKED" "ITEM" 
+                               "ALLTAGS" "TAGS"))
+        (temp-buffer "*Org Properties*"))
+    ;; Iterate over all headlines and collect property-value pairs
+    (org-map-entries
+     (lambda ()
+       (let ((properties (org-entry-properties)))
+         (dolist (prop properties)
+           (let ((key (car prop))
+                 (value (cdr prop)))
+             (unless (member key excluded-properties) ;; Exclude unwanted properties
+               (puthash key
+                        (append (gethash key property-values) (list value))
+                        property-values)))))))
+    ;; Create and populate the temporary buffer
+    (with-current-buffer (get-buffer-create temp-buffer)
+      (erase-buffer)
+      (org-mode) ;; Set to org-mode
+      (maphash
+       (lambda (key values)
+         (insert (format "* %s\n" key)) ;; Property as a headline
+         (dolist (val (delete-dups values)) ;; Unique values under the headline
+           (insert (format "- %s\n" val))))
+       property-values)
+      (goto-char (point-min)))
+    (display-buffer temp-buffer)))
+
+
 (defun org-ranker-add-highlight (highlight)
   "Add HIGHLIGHT keyword to the org document at point."
   (interactive "sHIGHLIGHT: ")
@@ -244,32 +307,7 @@ This function ensures keywords of the same type are grouped together."
         (keyword org-ranker-highlight-keyword))
     (org-ranker-insert-keyword keyword regex highlight)))
 
-(defhydra org-ranker-hydra (:color blue :hint nil)
-  "Org Ranker Actions: "
-  ;; Basic Actions
-  ("s" org-ranker-sort "Process Rules" :column "Common")
-  ("b" org-ranker-set-base-score "Set Entry's Base Score" :column "Common")
-  ("r" org-ranker-add-rule "Add Rule" :column "Common")
-  ("x" org-ranker-add-exclude "Add Exclude" :column "Common")
-  ("h" org-ranker-add-highlight "Add Highlight" :column "Common")
-  ;; Manual
-  ("mh" org-ranker-manual-highlight "Highlight Entry" :column "Manual")
-  ("mH" org-ranker-remove-highlight "Remove Highlight on Entry" :column "Manual")
-  ("mp" org-ranker-move-headline-up "Move Up" :column "Manual")
-  ("mn" org-ranker-move-headline-down "Move Down" :column "Manual")
-  ("ma" org-ranker-move-headline-start "Move to Start" :column "Manual")
-  ("me" org-ranker-move-headline-end "Move to End" :column "Manual")
-  ("mP" org-ranker-move-headline-up-n "Move Up N Lines" :column "Manual")
-  ("mN" org-ranker-move-headline-down-n "Move Down N Lines" :column "Manual")
-  ;; Manual Actions
-  ("]" org-ranker-exclude "Process New Excludes" :column "Actions")
-  ("[" org-ranker-unexclude "Remove Old Excludes" :column "Actions")
-  ("{" org-ranker-highlight "Process New Highlights" :column "Actions")
-  ("}" org-ranker-remove-highlights "Remove Old Highlights" :column "Actions")
-  ("'" org-ranker-sort "Sort Headlines by Score" :column "Actions")
-  ("\"" org-ranker-populate-scores "Populate Scores" :column "Actions")
-  ;; Import
-  ("c" org-ranker-import-csv "Import CSV File" :column "Import"))
+
 
 ;;; ===== Sorting =====
 (defun org-ranker-get-headlines-with-scores ()
@@ -561,28 +599,6 @@ Returns a list: (key comparator value)."
       (if (equal (org-current-level) 1)
 	  (org-demote-subtree))
       (message "Excluded: %s" (org-get-heading t t t t)))))
-
-(defun org-ranker-unexclude-one ()
-  "Evaluates all subheadings under the 'exclude' heading, moving any that no longer match exclusion rules back to the main body."
-  (interactive)
-  (let ((rules (org-ranker-get-excludes))
-        (exclude-pos (org-ranker-get-exclude-heading-position))
-	headings-to-move)
-    (save-excursion
-      (goto-char exclude-pos) ;; Navigate to the exclude heading
-      (org-map-entries
-       (lambda ()
-         ;; Check if the current heading matches any exclusion rules
-	 (unless (org-ranker-evaluate-excludes rules)
-	   (unless (string= (substring-no-properties (org-get-heading t t t t)) org-ranker-exclude-header-name)
-	     (push (point) headings-to-move))))
-       nil 'tree))
-      (goto-char (car headings-to-move))
-      (org-cut-subtree)
-      (goto-char (point-min))
-      (org-paste-subtree)
-      ;(org-promote-subtree)
-      ))
 
 (defun org-ranker-unexclude ()
   "Evaluates all subheadings under the 'exclude' heading, moving any that no longer match exclusion rules back to the main body."
