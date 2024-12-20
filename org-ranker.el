@@ -3,7 +3,7 @@
 ;; Author: CJ
 ;; Keywords: org, convenience
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "27.1") (org "9.4"))
+;; Package-Requires: ((emacs "27.1") (org "9.4") (csv "2.1"))
 
 ;;; Commentary:
 ;;
