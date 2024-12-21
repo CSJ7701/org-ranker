@@ -7,6 +7,35 @@ Org Ranker uses keywords to define rules. It matches headlines within an org fil
 
 Org Ranker also allows the user to define rules to exclude headlines from sorting, or rules to highlight certain headings using an overlay. Any headline which matches one of these exclusion rules is placed under a designated 'EXCLUDE' heading at the end of the document.
 
+* Contents
+:PROPERTIES:
+:TOC:      :include all :depth 3
+:END:
+:CONTENTS:
+- [[#contents][Contents]]
+- [[#features][Features]]
+  - [[#functions][Functions]]
+- [[#screenshots][Screenshots]]
+- [[#installation][Installation]]
+  - [[#straightel][Straight.el]]
+  - [[#manual-installation][Manual Installation]]
+- [[#usage][Usage]]
+  - [[#ranker-rule][RANKER-RULE]]
+    - [[#valid-comparators][Valid comparators]]
+    - [[#examples][Examples]]
+  - [[#ranker-exclude][RANKER-EXCLUDE]]
+    - [[#valid-comparators][Valid Comparators]]
+    - [[#examples][Examples]]
+  - [[#ranker-highlight][RANKER-HIGHLIGHT]]
+    - [[#valid-comparators][Valid Comparators]]
+    - [[#examples][Examples]]
+  - [[#example-document][Example Document]]
+- [[#configuration][Configuration]]
+- [[#contributing][Contributing]]
+- [[#license][License]]
+:END:
+
+
 * Features
 - Sort org headlines
 - List headlines properties
@@ -281,7 +310,7 @@ Almost all of Org Ranker's behavior can be modified to fit your specific prefere
 Take a look at the =org-ranker= group in Emacs' customize interface to explore available options.
 
 
-If you use the 'hydra' package, here is an example of a hydra that could simplify the interface to this package.
+If you use the [[https://github.com/abo-abo/hydra][hydra]] package, here is an example of a hydra that could simplify the interface to this package.
 
 #+begin_src emacs-lisp
 (defhydra org-ranker-hydra (:color blue :hint nil)
