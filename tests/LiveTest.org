@@ -29,7 +29,7 @@
 :PROPERTIES:
 :ORG-RANKER-SCORE: -2
 :END:
-** John
+** TODO John
 :PROPERTIES:
 :Name:     John
 :Age:      40

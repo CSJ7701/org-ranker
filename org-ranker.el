@@ -266,14 +266,15 @@ This function ensures keywords of the same type are grouped together."
     (display-buffer temp-buffer)))
 
 
-(defun org-ranker-list-properties ()
+(defun org-ranker-list-properties (&optional ARG)
   "List all properties in the Org buffer and their values in a temporary buffer.
-Excludes certain predefined properties."
+Excludes certain predefined properties unless an optional argument is passed."
   (interactive)
   (let ((property-values (make-hash-table :test 'equal))
-        (excluded-properties '("CATEGORY" "FILE" "TODO" "PRIORITY" 
-                               "ORG-RANKER-SCORE" "BLOCKED" "ITEM" 
-                               "ALLTAGS" "TAGS"))
+        (excluded-properties (if ARG '()
+			       '("CATEGORY" "FILE" "TODO" "PRIORITY" 
+				 "ORG-RANKER-SCORE" "BLOCKED" "ITEM" 
+				 "ALLTAGS" "TAGS")))
         (temp-buffer "*Org Properties*"))
     ;; Iterate over all headlines and collect property-value pairs
     (org-map-entries

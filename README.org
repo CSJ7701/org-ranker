@@ -119,7 +119,7 @@ You can import CSV files to a temporary org-mode buffer.
 Once you define some rules, you can apply them to sort your headlines and apply any highlighting/exclude rules that you have specified.
 [[file:assets/sort-headlines.gif]]
 * Installation
-This package has not been added to Elpa or Melpa. You can install manually, or use straight.el.
+This package has not been added to Elpa or Melpa. You can install manually, or use straight.el. I don't currently plan on changing this, primarily because I'm not sure how many people will actually find this package useful.
 ** Straight.el
 #+begin_src emacs-lisp
    (straight-use-package
