@@ -59,7 +59,6 @@
 
 (require 'org)
 (require 'csv)
-(require 'hydra)
 
 ;;; =======  Variables  =======
 
