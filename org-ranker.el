@@ -779,6 +779,66 @@ ROW-SEPARATOR specifies the row separator (default: newline)."
 	      contents)
 	(switch-to-buffer (current-buffer))))))
 
+(defun org-ranker-export-csv (output-file &optional property-names)
+  "Export headlines and their properties from the current Org document to OUTPUT-FILE as CSV.
+The headline titled 'EXCLUDE' with the tag 'exclude' and its children are excluded.
+If PROPERTY-NAMES is provided, it determines the order of columns in the CSV file.
+Otherwise, all properties are dynamically extracted and ordered alphabetically."
+  (interactive "FExport to CSV file: ")
+  (let ((exclude-boundaries nil)
+        (headline-data '())
+        (all-property-names (or property-names '())))
+    ;; Identify the boundaries of "EXCLUDE" headlines and their subtrees
+    (org-map-entries
+     (lambda ()
+       (let ((title (substring-no-properties (org-get-heading t t t t)))
+             (tags (org-get-tags))
+             (begin (point))
+             (end (save-excursion (org-end-of-subtree t t))))
+         (when (and (string= title "EXCLUDE")
+                    (member "exclude" tags))
+           (push (cons begin end) exclude-boundaries)))) t)
+    ;; Collect headline data and property names if property-names is not provided
+    (org-map-entries
+     (lambda ()
+       (let* ((begin (point))
+              (end (save-excursion (org-end-of-subtree t t)))
+              (in-exclude (cl-some
+                           (lambda (bounds)
+                             (and (>= begin (car bounds))
+                                  (<= end (cdr bounds))))
+                           exclude-boundaries)))
+         (unless in-exclude
+           (let ((title (substring-no-properties (org-get-heading t t t t)))
+                 (properties (org-entry-properties nil 'standard))
+                 (row (make-hash-table :test 'equal)))
+             ;; Populate row hash table with properties
+             (puthash "Headline" title row)
+             (dolist (prop properties)
+               (puthash (car prop) (cdr prop) row)
+               ;; Add to all-property-names only if not explicitly provided
+               (unless (or property-names (member (car prop) all-property-names))
+                 (push (car prop) all-property-names)))
+             (push row headline-data))))))
+    ;; Finalize property names if not provided
+    (unless property-names
+      ;; Ensure "Headline" is the first column, followed by others in alphabetical order
+      (setq all-property-names (remove "Headline" all-property-names))
+      (setq all-property-names (cons "Headline" (sort all-property-names #'string<))))
+    ;; Write to CSV file
+    (with-temp-file output-file
+      ;; Write the header row
+      (insert (mapconcat #'identity all-property-names ",") "\n")
+      ;; Write each headline's data
+      (dolist (entry (reverse headline-data))
+        (dolist (prop-name all-property-names)
+          (let ((value (gethash prop-name entry "")))
+            (insert (format "%s," (or value "")))))
+        ;; Replace the trailing comma with a newline
+        (delete-char -1)
+        (insert "\n")))
+    (message "Exported headlines to %s" output-file)))
+
 ;;; Wrapper
 (defun org-ranker-sort ()
     "Perform all ranking and organizational tasks for Org headlines.
