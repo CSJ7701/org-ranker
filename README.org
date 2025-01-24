@@ -107,6 +107,11 @@ Most of these functions are provided for convenience. The are primarily function
 - =org-ranker-import-csv=
   
   Import a CSV to org-mode format. Prompts for a CSV column that will become the headline. CSV data is imported to org-mode format in a temporary buffer, and all columns will become properties under the headline.
+
+- =org-ranker-export-csv=
+
+  Export to a CSV file. Specify output file, and optionally the property names to output. 
+
 * Screenshots
 *CSV Import*
 
