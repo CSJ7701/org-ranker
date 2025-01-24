@@ -354,8 +354,8 @@ If there is something that does not work correctly, please open an [[https://git
 
 
 * Roadmap
-- [] Update regex for ranker rule to allow for custom scoring functions
-- [] Make 'CSV.el' dependency optional
-- [] org-ranker-list-properties should work with universal argument
-- [] Make Org-Ranker work on top level headings, and subheadings
+- [ ] Update regex for ranker rule to allow for custom scoring functions
+- [ ] Make 'CSV.el' dependency optional
+- [ ] org-ranker-list-properties should work with universal argument
+- [ ] Make Org-Ranker work on top level headings, and subheadings
 
