@@ -625,6 +625,29 @@ Returns a list: (key comparator value)."
 	  (org-demote-subtree))
       (message "Excluded: %s" (org-get-heading t t t t)))))
 
+;; There may be issues with this function. Haven't been able to track down what yet.
+(defun org-ranker-unexclude-one ()
+  "Evaluates all subheadings under the 'exclude' heading, moving any that no longer match exclusion rules back to the main body."
+  (interactive)
+  (let ((rules (org-ranker-get-excludes))
+        (exclude-pos (org-ranker-get-exclude-heading-position))
+	headings-to-move)
+    (save-excursion
+      (goto-char exclude-pos) ;; Navigate to the exclude heading
+      (org-map-entries
+       (lambda ()
+         ;; Check if the current heading matches any exclusion rules
+	 (unless (org-ranker-evaluate-excludes rules)
+	   (unless (string= (substring-no-properties (org-get-heading t t t t)) org-ranker-exclude-header-name)
+	     (push (point) headings-to-move))))
+       nil 'tree))
+      (goto-char (car headings-to-move))
+      (org-cut-subtree)
+      (goto-char (point-min))
+      (org-paste-subtree)
+      ;(org-promote-subtree)
+      ))
+
 (defun org-ranker-unexclude ()
   "Evaluates all subheadings under the 'exclude' heading, moving any that no longer match exclusion rules back to the main body."
   (interactive)

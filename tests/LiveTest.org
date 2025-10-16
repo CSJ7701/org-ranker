@@ -6,7 +6,7 @@
 
 #+RANKER-HIGHLIGHT: LOCATION==Maine:#00ffff
 
-#+RANKER-EXCLUDE: COLOR!=Orange
+#+RANKER-EXCLUDE: COLOR==Orange
 
 #+begin_src emacs-lisp
       (defun org-ranker-test-custom-func (age-value props)
@@ -24,6 +24,22 @@
       
 #+end_src
 
+* Anjelica
+:PROPERTIES:
+:Location: Nevada
+:ORG-RANKER-SCORE: 48
+:END:
+
+* Jim
+:PROPERTIES:
+:Name:     Jim
+:Age:      20
+:Location: Maine
+:Gender:   M
+:Color:    Yellow
+:ORG-RANKER-SCORE: 18
+:END:
+
 * Alice
 :PROPERTIES:
 :Age:      30
@@ -31,12 +47,6 @@
 :Gender:   F
 :Color:    Red
 :ORG-RANKER-SCORE: 5
-:END:
-
-* Anjelica
-:PROPERTIES:
-:Location: Nevada
-:ORG-RANKER-SCORE: 48
 :END:
 
 * Bob
@@ -49,7 +59,11 @@
 :END:
 
 
-* Alex
+* EXCLUDE                                                           :exclude:
+:PROPERTIES:
+:ORG-RANKER-SCORE: -2
+:END:
+** Alex
 :PROPERTIES:
 :Name:     Alex
 :Age:      55
@@ -57,15 +71,5 @@
 :Gender:   M
 :Color:    Orange
 :ORG-RANKER-SCORE: 8
-:END:
-
-* Jim
-:PROPERTIES:
-:Name:     Jim
-:Age:      20
-:Location: Maine
-:Gender:   M
-:Color:    Yellow
-:ORG-RANKER-SCORE: 18
 :END:
 
