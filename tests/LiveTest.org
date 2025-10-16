@@ -1,10 +1,34 @@
 #+RANKER-RULE: AGE>25:10
 #+RANKER-RULE: LOCATION~~Florida:-5
 #+RANKER-RULE: GENDER!=F:-2
+#+RANKER-RULE: LOCATION==Nevada:(org-ranker-test-custom-func-2)
+#+RANKER-RULE: AGE<25:(org-ranker-test-custom-func)
 
 #+RANKER-HIGHLIGHT: LOCATION==Maine:#00ffff
 
 #+RANKER-EXCLUDE: COLOR==Orange
+
+#+begin_src emacs-lisp
+      (defun org-ranker-test-custom-func (age-value props)
+        "Example scoring function that multiplies age by -1"
+        (let ((age (string-to-number (or (cdr (assoc "AGE" props)) "0"))))
+          (* age -1)
+  	(message props)))
+    	  
+
+    (defun org-ranker-test-custom-func-2 (location-value props)
+      "A test for the custom function ranker rule, returning a score of 50.
+    This function assumes it will be run as a pre-parsed ranker rule, i.e. - it will ONLY run on headlines with 'Nevada' as a location, and will assign a score based on that assumption."
+      50)
+
+      
+#+end_src
+
+* Anjelica
+:PROPERTIES:
+:Location: Nevada
+:ORG-RANKER-SCORE: 48
+:END:
 
 * John
 :PROPERTIES:
@@ -24,15 +48,6 @@
 :Color:    Red
 :ORG-RANKER-SCORE: 5
 :END:
-* Jim
-:PROPERTIES:
-:Name:     Jim
-:Age:      20
-:Location: Maine
-:Gender:   M
-:Color:    Yellow
-:ORG-RANKER-SCORE: -2
-:END:
 * Bob
 :PROPERTIES:
 :Name:     Bob
@@ -42,7 +57,19 @@
 :Color:    Green
 :ORG-RANKER-SCORE: -2
 :END:
+* Jim
+:PROPERTIES:
+:Name:     Jim
+:Age:      20
+:Location: Maine
+:Gender:   M
+:Color:    Yellow
+:ORG-RANKER-SCORE: -22
+:END:
 * EXCLUDE                                                           :exclude:
+:PROPERTIES:
+:ORG-RANKER-SCORE: -2
+:END:
 ** Alex
 :PROPERTIES:
 :Name:     Alex

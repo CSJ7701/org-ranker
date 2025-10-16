@@ -349,18 +349,25 @@ Iterates from the end of the buffer to avoid position shifting issues."
       )))
 
 ;;; Assign Score
+
 (defun org-ranker-parse-rule (rule)
-  "Parse a single #+RANKER-RULE string into structured date.
-Return a list: (key comparator value score)."
-  (if (string-match org-ranker-rule-regex rule)
-      (let ((key (upcase (match-string 1 rule)))
-	    (comparator (match-string 2 rule))
-	    (value (match-string 3 rule))
-	    (score-or-func (match-string 4 rule)))
-	(list key comparator value
-	      (if (string-prefix-p "(" score-or-func)
-		  (intern (substring score-or-func 1 -1)) ;; Parse as a function symbol
-		(string-to-number score-or-func))))))
+  "Parse a single #+RANKER-RULE string into structured data.
+Return a list: (key comparator value score-or-func)."
+  (when (string-match org-ranker-rule-regex rule)
+    (let* ((key (upcase (match-string 1 rule)))
+	   (comparator (match-string 2 rule))
+	   (value (match-string 3 rule))
+	   (raw-score (and (match-string 4 rule) (string-trim (match-string 4 rule))))
+	   ;; Detect 'function-like' form - like "(my-func)" possibly with spaces
+	   (func-sym (when (and raw-score
+				(string-match "^\\s-*(\\s-*\\([^ )]+\\)\\s-*)\\s-*$" raw-score))
+		       (intern (match-string 1 raw-score))))
+	   ;; Detect numeric (integers, decimals, optional sign)
+	   (num (when (and raw-score
+			   (string-match "^[+-]?[0-9]+\\(?:\\.[0-9]+\\)?$" raw-score))
+		  (string-to-number raw-score)))
+	   (parsed (or func-sym num raw-score)))
+      (list key comparator value parsed))))
 
 (defun org-ranker-get-rules ()
   "Retrieve and parse all #+RANKER-RULE lines in the current buffer."
@@ -372,46 +379,52 @@ Return a list: (key comparator value score)."
 	  (push (org-ranker-parse-rule (substring-no-properties rule)) rules))))
     (reverse (delq nil rules))))
 
-(defun org-ranker-evaluate-rule (rule value)
-  "Evaluate a RULE against a VALUE and return the corresponding score."
-  (let ((key (nth 0 rule))
-	(comparator (nth 1 rule))
-	(target (nth 2 rule))
-	(score-or-func (nth 3 rule)))
-    ;; -- Check Comparison Type --
+(defun org-ranker--callable-p (x)
+  "Return t if X can be 'funcall'ed (either a function object or an fbound symbol)."
+  (or (functionp x) (and (symbolp x) (fboundp x))))
+
+(defun org-ranker-evaluate-rule (rule value &optional props)
+  "Evaluate a single RULE against VALUE.
+If the rule matches, return either a numeric score or the result of calling a custom function. PROPS, if provided, is an alist of all properties for context, that will be passed to the function."
+  (let* ((key (nth 0 rule))
+	 (comparator (nth 1 rule))
+	 (target (nth 2 rule))
+	 (score-or-func (nth 3 rule))
+	 (matches nil))
+    ;; -- Determine if rule condition matches --
     (cond
      ;; String equality
      ((string= comparator "==")
-      (if (string= value target) score-or-func 0))
+      (setq matches (string= value target)))
      ;; String inequality
      ((string= comparator "!=")
-      (if (string= value target) 0 score-or-func))
-     ;; Substring matching (case insensitive)
+      (setq matches (not (string= value target))))
+     ;; Substring (case insensitive)
      ((string= comparator "~~")
-      (if (string-match-p (regexp-quote (downcase target))
-			  (downcase value))
-	  score-or-func 0))
+      (setq matches (string-match-p (regexp-quote (downcase target))
+				    (downcase value))))
+     ;; Not substring
      ((string= comparator "!~")
-      (if (string-match-p (regexp-quote (downcase target))
-			  (downcase value))
-	  0 score-or-func))
-     ;; Numeric comparison
+      (setq matches (not (string-match-p (regexp-quote (downcase target))
+					 (downcase value)))))
+     ;; Numeric comparisons
      ((member comparator '(">" "<" ">=" "<="))
-      (let ((value-num (string-to-number value))
-	    (target-num (string-to-number target)))
-	(cond
-	 ((and (equal comparator ">") (> value-num target-num)) score-or-func)
-	 ((and (equal comparator "<") (< value-num target-num)) score-or-func)
-	 ((and (equal comparator ">=") (>= value-num target-num)) score-or-func)
-	 ((and (equal comparator "<=") (<= value-num target-num)) score-or-func)
-	 (t 0))))
-
-     ;; Custom scoring function
-     ((functionp score-or-func)
-      (funcall score-or-func value))
-
-     ;; Default to 'no match' - score of 0
-     (t 0))))
+      (let ((v (string-to-number value))
+	    (tgt (string-to-number target)))
+	(setq matches
+	      (cond
+	       ((string= comparator ">") (> v tgt))
+	       ((string= comparator "<") (< v tgt))
+	       ((string= comparator "<=") (<= v tgt))
+	       ((string= comparator ">=") (>= v tgt)))))))
+    ;; -- Return score if matched --
+    (if matches
+	(if (org-ranker--callable-p score-or-func)
+	    ;; Pass both VALUE and PROPS to custom functions
+	    (funcall score-or-func value props)
+	  score-or-func)
+      0)))
+	       
 
 (defun org-ranker-calculate-score (rules)
   "Calculate the total score for the current heading using RULES."
@@ -422,6 +435,18 @@ Return a list: (key comparator value score)."
 	(when value
 	  (setq score (+ score (org-ranker-evaluate-rule rule value))))))
     score))
+
+;; NEW VERSION
+(defun org-ranker-calculate-score (rules)
+  "Calculate the total score for the current heading using RULES."
+  (let ((score 0)
+	(props (org-entry-properties (point) 'standard)))
+    (dolist (rule rules)
+      (let* ((key (nth 0 rule))
+	     (value (or (cdr (assoc key props)) "")))
+	(setq score (+ score (org-ranker-evaluate-rule rule value props)))))
+    score))
+
 
 (defun org-ranker-populate-scores ()
   "Calculates scores for all Org headings and insert/update a property with the score."

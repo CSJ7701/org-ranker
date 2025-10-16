@@ -80,21 +80,48 @@ A headline's score is cumulative, meaning that, if it matches multiple rules, th
 
 ------
 
-_This functionality is WIP._
-
 The RANKER-RULE keyword can also take a function as an argument.
+/RANKER-EXCLUDE and RANKER-HIGHLIGHT cannot./
 
-This function must take keyword and value as an argument, and return the score to assign the the headline.
+This function must take two arguments, =value= and =props= (both arguments need not be used, but they must be defined as function arguments).
+
+=value= is the value of the specified property.
+=props= is the complete alist of headline properties.
+These will be passed in to the custom function automatically.
+
+An example of a custom function and its use-case might look like this:
 #+begin_src org
-#+RANKER-RULE: LOCATION:(my-custom-score-func)
+
+ #+RANKER-RULE: AGE>=20:(my-custom-score-func)
+
+ * Alice
+:PROPERTIES:
+:Fitness:  0.8
+:AGE: 25
+:END:
+
+ * Bob
+:PROPERTIES:
+:AGE: 20
+:Fitness: .5
+:END:
+
 #+end_src
 
 An example of a valid function:
 #+begin_src emacs-lisp
-  (defun my-custom-score-func
-    ; WIP
-      )
+  (defun my-custom-score-func (value props)
+    "Multiplies 'AGE' by 'FITNESS'."
+    (let* ((fitness (string-to-number (or (cdr (assoc "FITNESS" props)) "1")))
+  	 (age (string-to-number value))
+  	 (score (* age fitness)))
+      (message "%s times %s: %s (orignal was %s)" age fitness score value)
+      score
+      ))
 #+end_src
+/NOTE:/ When accessing values from =props=, property names will *always* be upcased. This means that, even if you assign a property of "prop_name" or "Prop_Name", this will show up as "PROP_NAME" in the =props= alist. If you were to use "Fitness" in the function above (=...(cdr (assoc "Fitness" props))...=) rather then "FITNESS", your logic _will not work_.
+
+Applying the example rule to the example setup above would give Alice a score of 20.0 and Bob a score of 10.0 (note the float, since we perform float multiplication).
 
 ** RANKER-EXCLUDE
 The =RANKER-EXCLUDE= keyword moves headlines that match the specified criteria to an 'EXCLUDE' heading at the end of your org document.

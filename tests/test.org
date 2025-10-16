@@ -1,0 +1,37 @@
+#+RANKER-RULE: AGE>=20:(org-ranker-test-custom-func)
+
+* Alice
+:PROPERTIES:
+:Fitness:  0.8
+:AGE: 25
+:ORG-RANKER-SCORE: 20.0
+:END:
+
+* Bob
+:PROPERTIES:
+:AGE: 20
+:Fitness: .5
+:ORG-RANKER-SCORE: 10.0
+:END:
+
+* SETUP
+:PROPERTIES:
+:ORG-RANKER-SCORE: 0
+:END:
+
+#+begin_src emacs-lisp
+  (defun org-ranker-test-custom-func (value props)
+    (let* ((fitness (string-to-number (or (cdr (assoc "FITNESS" props)) "1")))
+  	 (age (string-to-number value))
+  	 (score (* age fitness)))
+      (message "Props: %s" props)
+      (message "%s times %s: %s (orignal was %s)" age fitness score value)
+      score
+      ))
+#+end_src
+
+* EXCLUDE                                                           :exclude:
+:PROPERTIES:
+:ORG-RANKER-SCORE: 0
+:END:
+
